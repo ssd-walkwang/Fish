@@ -1,0 +1,430 @@
+<!--
+ * @Author: your name
+ * @Date: 2020-08-14 22:24:52
+ * @LastEditTime: 2020-08-15 17:05:04
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \数据分析\Love\index.html
+-->
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>Our Love Story</title>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<style type="text/css">
+		@font-face {
+			font-family: digit;
+			src: url('digital-7_mono.ttf') format("truetype");
+		}
+#music  {
+	position: fixed; right:2vw; bottom: 2vw;
+	z-index: 11;
+	opacity: 1;
+}
+body {
+  position: relative;
+}
+
+canvas#canvas {
+  display: block;
+  background: #BEE4E2;
+  position:fixed;
+  top:0;
+  bottom:0;
+}
+#content{
+	position: relative;
+	z-index:10
+}
+
+		
+	</style>
+	<link href="css/default.css" type="text/css" rel="stylesheet">
+	<script>/*
+		* File Name / gardenEel.js
+		* Created Date / Aug 12, 2020
+		* Aurhor / Toshiya Marukubo
+		* Twitter / https://twitter.com/toshiyamarukubo
+		*/
+		
+		(function () {
+		  'use strict';
+		  window.addEventListener('load', function () {
+			var canvas = document.getElementById('canvas');
+		
+			if (!canvas || !canvas.getContext) {
+			  return false;
+			}
+		
+			/********************
+			  Random Number
+			********************/
+		
+			function rand(min, max) {
+			  return Math.floor(Math.random() * (max - min + 1) + min);
+			}
+			
+			/********************
+			  Var
+			********************/
+		
+			var ctx = canvas.getContext('2d');
+			var X = canvas.width = window.innerWidth;
+			var Y = canvas.height = window.innerHeight;
+			var mouseX = null;
+			var mouseY = null;
+			var shapeNum = 100;
+			var shapes = [];
+			var bubbleNum = 50;
+			var bubbles = [];
+			var rad = Math.PI * 2 / 12;
+			var style = {
+			  black: 'black',
+			  white: 'white',
+			  lineWidth: 4,
+			};
+		
+			if (X < 768) {
+			  shapeNum = 50;
+			  bubbleNum = 25;
+			}
+		
+			/********************
+			  Animation
+			********************/
+		
+			window.requestAnimationFrame =
+			  window.requestAnimationFrame ||
+			  window.mozRequestAnimationFrame ||
+			  window.webkitRequestAnimationFrame ||
+			  window.msRequestAnimationFrame ||
+			  function(cb) {
+				setTimeout(cb, 17);
+			  };
+		
+			/********************
+			  Draw Ground
+			********************/
+			
+			function drawGround() {
+			  ctx.save();
+			  ctx.fillStyle = 'rgb(247, 237, 223)';
+			  ctx.beginPath();
+			  ctx.moveTo(0, Y);
+			  ctx.lineTo(0, Y - Y / 5);
+			  ctx.lineTo(X, Y - Y / 5);
+			  ctx.lineTo(X, Y);
+			  ctx.closePath();
+			  ctx.fill();
+			  ctx.restore();
+			}
+			
+			/********************
+			  Bubble
+			********************/
+			
+			function Bubble(ctx, x, y, i) {
+			  this.ctx = ctx;
+			  this.init(x, y, i);
+			}
+		
+			Bubble.prototype.init = function(x, y, i) {
+			  this.x = x;
+			  this.y = y;
+			  this.r = rand(10, 50);
+			  this.ga = Math.random() * Math.random();
+			  this.v = {
+				x: 0,
+				y: Math.random()
+			  };
+			};
+		
+			Bubble.prototype.draw = function() {
+			  var ctx = this.ctx;
+			  ctx.save();
+			  ctx.fillStyle = style.white;
+			  ctx.globalAlpha = this.ga;
+			  ctx.beginPath();
+			  ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2, false);
+			  ctx.fill();
+			  ctx.restore();
+			};
+		
+			Bubble.prototype.updatePosition = function() {
+			  this.x += this.v.x;
+			  this.y -= this.v.y;
+			};
+		
+			Bubble.prototype.wrapPosition = function() {
+			  if (this.y < 0 - this.r) this.y = Y + this.r;
+			};
+		
+			Bubble.prototype.render = function() {
+			  this.updatePosition();
+			  this.wrapPosition();
+			  this.draw();
+			};
+		
+			for (var i = 0; i < bubbleNum; i++) {
+			  var b = new Bubble(ctx, rand(0, X), rand(0, Y));
+			  bubbles.push(b);
+			}
+		
+			/********************
+			  Shape
+			********************/
+			 
+			function Shape(ctx, x, y, i) {
+			  this.ctx = ctx;
+			  this.init(x, y, i);
+			}
+			
+			Shape.prototype.init = function(x, y, i) {
+			  this.x = x;
+			  this.y = y;
+			  this.i = i;
+			  this.cx = this.x;
+			  this.cy = this.y;
+			  this.l = ((Y - Y / 5) - this.y) / 3;
+			  if (this.l < 0) this.l *= -1; 
+			  this.a = rand(0, 360);
+			  this.rad = this.a * Math.PI / 180;
+			  this.v = {
+				x: 0,
+				y: 0
+			  };
+			};
+			
+			Shape.prototype.draw = function() {
+			  var ctx  = this.ctx;
+			  ctx.save();
+			  ctx.lineWidth = this.l / 5;
+			  ctx.lineCap = 'round';
+			  ctx.strokeStyle = style.white;
+			  ctx.beginPath();
+			  ctx.moveTo(Math.sin(this.rad) * 10 + this.cx, this.cy);
+			  ctx.bezierCurveTo(
+				Math.cos(this.rad) * 30 + this.x,
+				this.y + this.l,
+				Math.sin(this.rad) * 10 + this.x,
+				this.y + this.l + this.l,
+				this.x,
+				this.y + this.l + this.l + this.l
+			  );
+			  ctx.stroke();
+			  ctx.fillStyle = 'rgb(190, 228, 226)';
+			  ctx.beginPath();
+			  if (this.i % 2 === 0) {
+				ctx.arc(Math.sin(this.rad) * 10 + this.cx + this.l / 50, this.cy + this.l / 25, this.l / 30, 0, Math.PI * 2, false);
+			  } else {
+				ctx.arc(Math.sin(this.rad) * 10 + this.cx - this.l / 50, this.cy + this.l / 25, this.l / 30, 0, Math.PI * 2, false);
+			  }
+			  ctx.fill();
+			  ctx.restore();
+			};
+		
+			Shape.prototype.updateParams = function(i) {
+			  if (i % 2 === 0) {
+				this.a += 1;
+			  } else {
+				this.a -= 1;
+			  }
+			  this.rad = this.a * Math.PI / 180;
+			};
+		
+			Shape.prototype.collMouse = function() {
+			  var a = mouseX - this.cx;
+			  var b = mouseY - this.cy;
+			  var d = a * a + b * b;
+			  var dist = Math.sqrt(d);
+			  if (dist < 100) {
+				var colAngle = Math.atan2(mouseY - this.cy, mouseX - this.cx);
+				this.v.x = -Math.cos(colAngle) * 2;
+				this.v.y = -Math.sin(colAngle) * 2;
+				this.cx -= this.v.x;
+				this.cy -= this.v.y;
+			  } else {
+				var colAngle = Math.atan2(this.cy - this.y, this.cx - this.x); 
+				this.v.x = -Math.cos(colAngle) * 1;
+				this.v.y = -Math.sin(colAngle) * 1;
+				this.cx += this.v.x;
+				this.cy += this.v.y;
+			  }
+			};
+		
+			Shape.prototype.render = function(i) {
+			  this.updateParams(i);
+			  this.collMouse();
+			  this.draw();
+			};
+		
+			for (var i = 0; i < shapeNum; i++) {
+			  var s = new Shape(ctx, rand(0, X), rand(Y / 2, Y - Y / 5), i);
+			  shapes.push(s);
+			}
+		
+			/********************
+			  Render
+			********************/
+			
+			function render() {
+			  ctx.clearRect(0, 0, X, Y);
+			  for (var i = 0; i < shapes.length; i++) {
+				shapes[i].render(i);
+			  }
+			  drawGround();
+			  for (var i = 0; i < bubbles.length; i++) {
+				bubbles[i].render();
+			  }
+			  requestAnimationFrame(render);
+			}
+		
+			render();
+		
+			/********************
+			  Event
+			********************/
+			
+			function onResize() {
+			  X = canvas.width = window.innerWidth;
+			  Y = canvas.height = window.innerHeight;
+			  shapes = [];
+			  bubbles = [];
+			  if (X < 768) {
+				shapeNum = 50;
+				bubbleNum = 25;
+			  } else {
+				shapeNum = 100;
+				bubbleNum = 50;
+			  }
+			  for (var i = 0; i < shapeNum; i++) {
+				var s = new Shape(ctx, rand(0, X), rand(Y / 2, Y - Y / 5), i);
+				shapes.push(s);
+			  }
+			  for (var i = 0; i < bubbleNum; i++) {
+				var b = new Bubble(ctx, rand(0, X), rand(0, Y));
+				bubbles.push(b);
+			  }
+			}
+		
+			window.addEventListener('resize', function() {
+			  onResize();
+			});
+		
+			window.addEventListener('mousemove', function(e) {
+			  mouseX = e.clientX;
+			  mouseY = e.clientY;
+			}, false);
+		
+			canvas.addEventListener('touchmove', function(e) {
+			  var touch = e.targetTouches[0];
+			  mouseX = touch.pageX;
+			  mouseY = touch.pageY;
+			}, false);
+			
+			canvas.addEventListener('touchend', function(e) {
+			  var touch = e.targetTouches[0];
+			  mouseX = null;
+			  mouseY = null;
+			}, false);
+		
+		  });
+		})();</script>
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<script type="text/javascript" src="js/garden.js"></script>
+	<script type="text/javascript" src="js/functions.js"></script>
+</head>
+
+<body>
+
+	<iframe id ="music" frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=1456691371&auto=1&height=66"></iframe>
+	<div id="mainDiv">
+		
+		<canvas id="canvas">Canvas not supported.</canvas>
+		<div id="content">
+			<div id="code">
+				<span class="comments">/**</span><br />
+				<span class="space" /><span class="comments">* unconsciously it has been a year since we
+					meet,</span><br />
+				<span class="space" /><span class="comments">* so I write some code to celebrate our 1st
+					anniversary.</span><br />
+				<span class="space" /><span class="comments">*/</span><br />
+				Boy i = <span class="keyword">new</span> Boy(<span class="string">"HouHou"</span>);<br />
+				Girl u = <span class="keyword">new</span> Girl(<span class="string">"YuYu"</span>);<br />
+				<span class="comments">// Dec 16, 2019, I told you I love you. </span><br />
+				i.love(u);<br />
+				<span class="comments">// Luckily, you accepted and became my girlfriend eversince.</span><br />
+				u.accepted();<br />
+				<span class="comments">// Since then, I miss u every day.</span><br />
+				i.miss(u);<br />
+				<span class="comments">// And take care of u and our love.</span><br />
+				i.takeCareOf(u);<br />
+				<span class="comments">// You say that you want a glamorous life.</span><br />
+				<span class="comments">// So I keep passionate and I have confidence that you will.</span><br />
+				<span class="keyword">boolean</span> isHappy = <span class="keyword">true</span>;<br />
+				<span class="keyword">while</span> (isHappy) {<br />
+				<span class="placeholder" />i.devoteFor(u);<br />
+				<span class="placeholder" /><span class="comments">// I think it is an important decision to hold your
+					hands</span><br />
+				<span class="placeholder" /><span class="comments">// and thank you for hugging me.<menu></menu>
+					</span><br />
+				<span class="placeholder" />isHappy = u.rubFish();<br />
+				}<br />
+				<span class="comments">// After a romantic graduating, we will stay together happily ever
+					after.</span><br />
+				i.stayWith(u);<br />
+				i.liveHappilyWith(u);<br />
+			</div>
+			<div id="loveHeart">
+				<canvas id="garden"></canvas>
+				<div id="words">
+					<div id="messages">
+						YuYu, I have fallen in love with you for
+						<div id="elapseClock"></div>
+					</div>
+					<div id="loveu">
+						Love u forever and ever.<br />
+						<div class="signature">- HouHou</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+	<script type="text/javascript">
+		var offsetX = $("#loveHeart").width() / 2;
+		var offsetY = $("#loveHeart").height() / 2 - 55;
+		var together = new Date();
+		together.setFullYear(2019, 11, 15);
+		together.setHours(20);
+		together.setMinutes(0);
+		together.setSeconds(0);
+		together.setMilliseconds(0);
+
+		if (!document.createElement('canvas').getContext) {
+			var msg = document.createElement("div");
+			msg.id = "errorMsg";
+			msg.innerHTML = "Your browser doesn't support HTML5!<br/>Recommend use Chrome 14+/IE 9+/Firefox 7+/Safari 4+";
+			document.body.appendChild(msg);
+			$("#code").css("display", "none")
+			$("#copyright").css("position", "absolute");
+			$("#copyright").css("bottom", "10px");
+			document.execCommand("stop");
+		} else {
+			setTimeout(function () {
+				startHeartAnimation();
+			}, 5000);
+
+			timeElapse(together);
+			setInterval(function () {
+				timeElapse(together);
+			}, 500);
+
+			adjustCodePosition();
+			$("#code").typewriter();
+		}
+	</script>
+</body>
+
+</html>
